@@ -1,0 +1,64 @@
+name: Generar Videos con Agnes AI
+
+on:
+  workflow_dispatch:
+    inputs:
+      uid:
+        description: 'UID del producto'
+        required: true
+        type: string
+      imagenUrl:
+        description: 'URL de la imagen de fondo'
+        required: true
+        type: string
+      audioUrl:
+        description: 'URL del audio (FishAudio)'
+        required: true
+        type: string
+      duracion:
+        description: 'Duración en segundos'
+        required: true
+        type: string
+      idioma:
+        description: 'Idioma'
+        required: true
+        type: string
+      filaNum:
+        description: 'Número de fila'
+        required: false
+        type: string
+
+jobs:
+  generar-videos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Instalar dependencias
+        run: pip install requests
+      
+      - name: Generar videos
+        run: python .github/scripts/generar_videos.py
+        env:
+          AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
+          UID: ${{ github.event.inputs.uid }}
+          IMAGEN_URL: ${{ github.event.inputs.imagenUrl }}
+          AUDIO_URL: ${{ github.event.inputs.audioUrl }}
+          DURACION: ${{ github.event.inputs.duracion }}
+          IDIOMA: ${{ github.event.inputs.idioma }}
+          FILA_NUM: ${{ github.event.inputs.filaNum }}
+      
+      - name: Notificar
+        if: always()
+        run: python .github/scripts/notificar.py
+        env:
+          UID: ${{ github.event.inputs.uid }}
+          FILA_NUM: ${{ github.event.inputs.filaNum }}
+          APPS_SCRIPT_URL: ${{ secrets.APPS_SCRIPT_URL }}
